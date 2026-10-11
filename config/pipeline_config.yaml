@@ -1,0 +1,68 @@
+pipeline:
+  name: "Bank Transaction Ingestion Pipeline"
+  version: "1.0.0"
+
+paths:
+  input_dir: "data/input"
+  output_dir: "data/output"
+  quarantine_dir: "data/quarantine"
+  state_dir: "data/state"
+
+input:
+  # Glob pattern for all CSV files in input_dir
+  file_pattern: "*.csv"
+  # Pattern to identify late-correction/backfill files
+  late_correction_pattern: "*late_correction*"
+  # Columns that are excluded from input discovery (pipeline-generated)
+  excluded_files:
+    - "NOTES.txt"
+
+  # Flexible column name mapping: canonical_name → [possible aliases in raw CSV]
+  column_aliases:
+    account_number: ["account_number", "account_no", "acct_no", "acc_number"]
+    txn_date:       ["txn_date", "transaction_date", "date", "txn_dt", "bn_date", "txn_dt"]
+    txn_time:       ["txn_time", "transaction_time", "time", "txn_tm", "bn_time"]
+    description:    ["description", "narration", "remarks", "txn_description", "details"]
+    ref_no:         ["ref_no", "reference_no", "reference_number", "ref", "reference"]
+    debit:          ["debit", "debit_amount", "withdrawal", "dr"]
+    credit:         ["credit", "credit_amount", "deposit", "cr"]
+    balance:        ["balance", "closing_balance", "bal", "running_balance"]
+    account_type:   ["account_type", "acct_type", "acc_type", "type"]
+
+validation:
+  # Tried in order; first match wins
+  date_formats:
+    - "%d-%m-%Y"
+    - "%d/%m/%Y"
+    - "%Y-%m-%d"
+    - "%m/%d/%Y"
+    - "%d-%b-%Y"
+  # Sanity bounds for parsed year
+  year_min: 2000
+  year_max: 2100
+  # Required source columns (by canonical name)
+  required_columns:
+    - account_number
+    - txn_date
+    - ref_no
+
+deduplication:
+  # Primary business key – must be unique per transaction
+  primary_key: ref_no
+  # Secondary composite key for row-level exact-copy detection
+  composite_key_columns:
+    - account_number
+    - txn_date
+    - txn_time
+    - description
+    - debit
+    - credit
+
+output:
+  canonical_file: "canonical_transactions.csv"
+  quarantine_file: "quarantine.csv"
+  reconciliation_report: "reconciliation_report"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s [%(name)-28s] %(levelname)-8s %(message)s"

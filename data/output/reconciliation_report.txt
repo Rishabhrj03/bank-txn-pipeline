@@ -1,0 +1,51 @@
+=================================================================
+  BANK TRANSACTION PIPELINE  –  RECONCILIATION REPORT
+=================================================================
+  Run ID        : f984e425-74bc-4ee5-82ec-3a0113290632
+  Generated At  : 2026-10-11T06:45:57.455267+00:00
+=================================================================
+
+  OVERALL SUMMARY
+  ---------------------------------------------
+  Files Processed (new)    : 3
+  Files Skipped (idempotent): 0
+  Total Records Received   : 61
+  Total Records Processed  : 53
+  Total Records Rejected   : 5
+  Total Duplicates Removed : 3
+
+  REJECTION BREAKDOWN
+  ---------------------------------------------
+    BOTH_DEBIT_AND_CREDIT                     : 1
+    DUPLICATE_ROW                             : 3
+    INVALID_DATE                              : 2
+    NO_DEBIT_OR_CREDIT                        : 2
+
+  FILE-LEVEL DETAIL
+  ---------------------------------------------
+  batch_2026-08-01.csv  [PROCESSED]
+    Total Input : 38
+    Valid       : 34
+    Quarantined : 3
+    Duplicates  : 1
+
+  batch_2026-08-02.csv  [PROCESSED]
+    Total Input : 19
+    Valid       : 16
+    Quarantined : 2
+    Duplicates  : 1
+
+  batch_2026-08-04_late_correction.csv [LATE CORRECTION]  [PROCESSED]
+    Total Input : 4
+    Valid       : 3
+    Quarantined : 0
+    Duplicates  : 1
+
+  LATE CORRECTION FILE IMPACT
+  ---------------------------------------------
+    Source File          : batch_2026-08-04_late_correction.csv
+    New Records Added    : 3
+    Duplicates Skipped   : 1
+    Records Quarantined  : 0
+
+=================================================================

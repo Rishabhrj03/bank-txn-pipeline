@@ -1,0 +1,54 @@
+{
+  "run_id": "f984e425-74bc-4ee5-82ec-3a0113290632",
+  "generated_at": "2026-10-11T06:45:57.455267+00:00",
+  "total_records_received": 61,
+  "total_records_processed": 53,
+  "total_records_rejected": 5,
+  "total_duplicates_removed": 3,
+  "total_files_processed": 3,
+  "total_files_skipped": 0,
+  "rejection_breakdown": {
+    "INVALID_DATE": 2,
+    "BOTH_DEBIT_AND_CREDIT": 1,
+    "NO_DEBIT_OR_CREDIT": 2,
+    "DUPLICATE_ROW": 3
+  },
+  "file_stats": [
+    {
+      "file_name": "batch_2026-08-01.csv",
+      "total_records": 38,
+      "valid_records": 34,
+      "quarantined_records": 3,
+      "duplicate_records": 1,
+      "skipped_already_processed": false,
+      "is_late_correction": false,
+      "late_correction_new_records": 0
+    },
+    {
+      "file_name": "batch_2026-08-02.csv",
+      "total_records": 19,
+      "valid_records": 16,
+      "quarantined_records": 2,
+      "duplicate_records": 1,
+      "skipped_already_processed": false,
+      "is_late_correction": false,
+      "late_correction_new_records": 0
+    },
+    {
+      "file_name": "batch_2026-08-04_late_correction.csv",
+      "total_records": 4,
+      "valid_records": 3,
+      "quarantined_records": 0,
+      "duplicate_records": 1,
+      "skipped_already_processed": false,
+      "is_late_correction": true,
+      "late_correction_new_records": 3
+    }
+  ],
+  "late_correction_impact": {
+    "source_file": "batch_2026-08-04_late_correction.csv",
+    "new_records_added": 3,
+    "duplicates_skipped": 1,
+    "records_quarantined": 0
+  }
+}
