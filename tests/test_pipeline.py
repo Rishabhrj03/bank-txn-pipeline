@@ -189,16 +189,23 @@ class TestIdempotency:
 
     def test_second_run_output_unchanged(self, tmp_path):
         cfg = make_test_config(tmp_path)
-        write_csv(cfg.paths.input_dir / "batch.csv", [valid_row("R001"), valid_row("R002")])
+        bad = valid_row("R003")
+        bad["debit"] = ""
+        bad["credit"] = ""
+        write_csv(cfg.paths.input_dir / "batch.csv", [valid_row("R001"), valid_row("R002"), bad])
 
         PipelineOrchestrator(cfg).run()
         c1 = pd.read_csv(cfg.paths.output_dir / "canonical_transactions.csv")
+        q1 = pd.read_csv(cfg.paths.quarantine_dir / "quarantine.csv")
 
         PipelineOrchestrator(cfg).run()
         c2 = pd.read_csv(cfg.paths.output_dir / "canonical_transactions.csv")
+        q2 = pd.read_csv(cfg.paths.quarantine_dir / "quarantine.csv")
 
-        assert len(c1) == len(c2)
+        assert len(c1) == len(c2) == 2
         assert set(c1["ref_no"]) == set(c2["ref_no"])
+        assert len(q1) == len(q2) == 1
+        assert "NO_DEBIT_OR_CREDIT" in q2.iloc[0]["rejection_reasons"]
 
     def test_new_file_processed_on_second_run(self, tmp_path):
         cfg = make_test_config(tmp_path)

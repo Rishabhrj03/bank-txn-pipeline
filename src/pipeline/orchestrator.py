@@ -46,7 +46,7 @@ import pandas as pd
 from ..config import PipelineConfig
 from ..deduplication.deduplicator import Deduplicator
 from ..ingestion.reader import FileReader
-from ..models.transaction import Transaction
+from ..models.transaction import Transaction, ValidationStatus
 from ..output.writer import TransactionWriter
 from ..reconciliation.reporter import (
     FileStats,
@@ -89,6 +89,7 @@ class PipelineOrchestrator:
         # Accumulated output for the whole run
         self._canonical: List[Transaction] = []
         self._quarantine: List[Transaction] = []
+        self._new_quarantine: List[Transaction] = []
 
     # ------------------------------------------------------------------
     # Public entry point
@@ -104,8 +105,9 @@ class PipelineOrchestrator:
             generated_at=datetime.now(timezone.utc).isoformat(),
         )
 
-        # Step 1: seed from existing canonical so re-runs don't duplicate
+        # Step 1: seed from existing canonical and quarantine so re-runs don't duplicate or drop records
         self._load_existing_canonical()
+        self._load_existing_quarantine()
 
         # Step 2: discover & classify input files
         regular, corrections = self._discover_files()
@@ -129,7 +131,7 @@ class PipelineOrchestrator:
         )
 
         # Step 6: reconciliation report
-        report.tally_rejection_reasons(self._quarantine)
+        report.tally_rejection_reasons(self._new_quarantine)
         self._reporter.save(report, self._cfg.output.reconciliation_report)
 
         self._state.complete_run(run_id, report.to_dict())
@@ -217,6 +219,8 @@ class PipelineOrchestrator:
         self._canonical.extend(unique)
         self._quarantine.extend(quarantined)
         self._quarantine.extend(duplicates)   # Duplicates also go to quarantine
+        self._new_quarantine.extend(quarantined)
+        self._new_quarantine.extend(duplicates)
 
         # Persist state
         self._state.mark_file_processed(
@@ -310,4 +314,83 @@ class PipelineOrchestrator:
             )
         except Exception as exc:
             logger.debug("Skipping bad canonical row: %s", exc)
+            return None
+
+    def _load_existing_quarantine(self) -> None:
+        """
+        If a quarantine output file already exists from a previous run,
+        load it so that re-runs or incremental runs preserve all previous
+        quarantine records.
+        """
+        quarantine_path = (
+            self._cfg.paths.quarantine_dir / self._cfg.output.quarantine_file
+        )
+        if not quarantine_path.exists():
+            return
+
+        try:
+            df = pd.read_csv(quarantine_path, dtype=str, keep_default_na=False)
+            transactions = []
+            for _, row in df.iterrows():
+                txn = self._df_row_to_quarantine_transaction(row)
+                if txn:
+                    transactions.append(txn)
+            self._quarantine = transactions
+            logger.info(
+                "Loaded %d existing quarantine records from %s",
+                len(transactions), quarantine_path.name,
+            )
+        except Exception as exc:
+            logger.warning(
+                "Could not load existing quarantine file (%s): %s",
+                quarantine_path, exc,
+            )
+
+    @staticmethod
+    def _df_row_to_quarantine_transaction(row: pd.Series) -> Optional[Transaction]:
+        """Reconstruct a Transaction from a row in the quarantine CSV."""
+        def g(col: str) -> str:
+            val = row.get(col, "")
+            return str(val) if val not in ("", "nan", None) else ""
+
+        def gf(col: str) -> Optional[float]:
+            val = row.get(col, "")
+            if str(val) in ("", "nan", "None", None):
+                return None
+            try:
+                return float(val)
+            except ValueError:
+                return None
+
+        try:
+            status_str = g("validation_status") or "INVALID"
+            status = (
+                ValidationStatus.DUPLICATE
+                if status_str == "DUPLICATE"
+                else ValidationStatus.INVALID
+            )
+            reasons_raw = g("rejection_reasons")
+            reasons = [r.strip() for r in reasons_raw.split(";") if r.strip()]
+
+            txn = Transaction(
+                account_number=g("account_number"),
+                txn_date_raw=g("txn_date_raw") or g("txn_date"),
+                txn_time=g("txn_time"),
+                description=g("description"),
+                ref_no=g("ref_no"),
+                debit=gf("debit"),
+                credit=gf("credit"),
+                balance=gf("balance"),
+                account_type=g("account_type"),
+                source_file=g("source_file") or "quarantine.csv",
+                row_number=int(row.get("row_number", 0) or 0),
+                txn_date=g("txn_date") or None,
+                validation_status=status,
+                rejection_reasons=reasons,
+            )
+            if g("record_hash"):
+                txn.record_hash = g("record_hash")
+            return txn
+        except Exception as exc:
+            logger.debug("Skipping bad quarantine row: %s", exc)
             return None
