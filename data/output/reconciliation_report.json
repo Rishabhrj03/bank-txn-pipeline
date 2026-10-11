@@ -1,25 +1,27 @@
 {
-  "run_id": "f984e425-74bc-4ee5-82ec-3a0113290632",
-  "generated_at": "2026-10-11T06:45:57.455267+00:00",
-  "total_records_received": 61,
-  "total_records_processed": 53,
+  "run_id": "daf77ca7-82df-4740-894a-e6c1cc865f90",
+  "generated_at": "2026-10-11T06:56:44.441162+00:00",
+  "total_records_received": 210,
+  "total_records_processed": 200,
   "total_records_rejected": 5,
-  "total_duplicates_removed": 3,
+  "total_duplicates_removed": 5,
   "total_files_processed": 3,
   "total_files_skipped": 0,
   "rejection_breakdown": {
-    "INVALID_DATE": 2,
+    "MISSING_REQUIRED_FIELD": 1,
     "BOTH_DEBIT_AND_CREDIT": 1,
     "NO_DEBIT_OR_CREDIT": 2,
-    "DUPLICATE_ROW": 3
+    "DUPLICATE_ROW": 4,
+    "INVALID_DATE": 1,
+    "DUPLICATE_REF_NO": 1
   },
   "file_stats": [
     {
       "file_name": "batch_2026-08-01.csv",
-      "total_records": 38,
-      "valid_records": 34,
+      "total_records": 187,
+      "valid_records": 180,
       "quarantined_records": 3,
-      "duplicate_records": 1,
+      "duplicate_records": 4,
       "skipped_already_processed": false,
       "is_late_correction": false,
       "late_correction_new_records": 0
@@ -27,9 +29,9 @@
     {
       "file_name": "batch_2026-08-02.csv",
       "total_records": 19,
-      "valid_records": 16,
+      "valid_records": 17,
       "quarantined_records": 2,
-      "duplicate_records": 1,
+      "duplicate_records": 0,
       "skipped_already_processed": false,
       "is_late_correction": false,
       "late_correction_new_records": 0

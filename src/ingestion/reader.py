@@ -59,10 +59,13 @@ class FileReader:
         try:
             # dtype=str prevents pandas from guessing types (e.g. stripping
             # leading zeros from account numbers or mis-parsing dates).
+            # sep=None + engine='python' automatically detects commas or tabs.
             df = pd.read_csv(
                 file_path,
                 dtype=str,
                 keep_default_na=False,  # Empty cells → "" not NaN
+                sep=None,
+                engine="python",
             )
         except Exception as exc:
             logger.error("Cannot read %s: %s", file_path, exc)
